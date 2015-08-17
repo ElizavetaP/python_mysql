@@ -1,0 +1,3 @@
+create database meteo;
+use meteo;
+create table prognoz2 (date DATE, temperature VARCHAR(20), pressure VARCHAR(20), nebulosity VARCHAR(20), humidity VARCHAR(20), station VARCHAR(20));
