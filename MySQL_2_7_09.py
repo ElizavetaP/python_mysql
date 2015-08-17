@@ -1,7 +1,12 @@
 import MySQLdb
 import sys
+import ConfigParser
 
-db = MySQLdb.connect(host="localhost", user="root", passwd = "surf", db = "meteo")
+config = ConfigParser.RawConfigParser()
+config.read('configs.ini')
+
+db = MySQLdb.connect(host=config.get('mysql', 'host'), user=config.get('mysql', 'user'), passwd = config.get('mysql', 'passwd'),
+                     db = config.get('mysql', 'db'))
 cursor = db.cursor()
 
 if sys.argv[1] == 'import':
