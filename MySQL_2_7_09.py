@@ -1,7 +1,7 @@
 import MySQLdb
 import sys
 
-db = MySQLdb.connect(host="localhost", user="root", passwd = "surf", db = "db")
+db = MySQLdb.connect(host="localhost", user="root", passwd = "surf", db = "meteo")
 cursor = db.cursor()
 
 if sys.argv[1] == 'import':
@@ -16,7 +16,7 @@ if sys.argv[1] == 'import':
 
         for line in lines:
             argv = unpack_line(line)
-            sql = """INSERT INTO prognoz1(date, temperature, pressure, nebulosity, humidity, station)
+            sql = """INSERT INTO prognoz2(date, temperature, pressure, nebulosity, humidity, station)
             VALUES ('%(date)s', '%(temperature)s', '%(pressure)s', '%(nebulosity)s', '%(humidity)s', '%(station)s')
             """%{"date":argv[0], "temperature":argv[1], "pressure":argv[2], "nebulosity":argv[3], "humidity":argv[4], "station":sys.argv[2]}
             cursor.execute(sql)
@@ -28,7 +28,7 @@ if sys.argv[1] == 'import':
 
 if sys.argv[1] == 'avarage':
     if len(sys.argv)==4:
-        sql2 = """SELECT temperature from prognoz1 WHERE date BETWEEN '%(1)s' AND '%(2)s'
+        sql2 = """SELECT temperature from prognoz2 WHERE date BETWEEN '%(1)s' AND '%(2)s'
         """%{"1":sys.argv[2], "2":sys.argv[3]}
         cursor.execute(sql2)
         data = cursor.fetchall()
@@ -48,7 +48,7 @@ if sys.argv[1] == 'avarage':
 ########avarage for day###############
 def daycalc(st,param):
     
-    sql3 = """SELECT %(1)s from prognoz1 WHERE station = '%(2)s' AND date = CAST(sysdate() AS DATE) 
+    sql3 = """SELECT %(1)s from prognoz2 WHERE station = '%(2)s' AND date = CAST(sysdate() AS DATE) 
     """%{"1":param, "2":st}
     cursor.execute(sql3)
 
@@ -72,7 +72,7 @@ if sys.argv[1] == 'daycalc':
         
 ##########print all###################
 def allst():
-    sql4 = """SELECT station from prognoz1 WHERE date = CAST(sysdate() AS DATE) 
+    sql4 = """SELECT station from prognoz2 WHERE date = CAST(sysdate() AS DATE) 
     """
     cursor.execute(sql4)
     data = cursor.fetchall()
@@ -83,7 +83,7 @@ def allst():
     return allst
             
 def printall(st):
-    sql5 = """SELECT * from prognoz1 WHERE station = '%(1)s' AND date = CAST(sysdate() AS DATE) 
+    sql5 = """SELECT * from prognoz2 WHERE station = '%(1)s' AND date = CAST(sysdate() AS DATE) 
     """%{"1":st}
     cursor.execute(sql5)
 
