@@ -9,6 +9,16 @@ db = MySQLdb.connect(host=config.get('mysql', 'host'), user=config.get('mysql', 
                      db = config.get('mysql', 'db'))
 cursor = db.cursor()
 
+def convert(T):
+    if config.get('temperature', 'T')== 'F':
+        T = float(5)/9*(T - 32)
+    return round(T,5)
+
+def revconv (T):
+    if config.get('temperature', 'T')== 'F':
+        T = T*float(9)/5 + 32
+    return round(T)
+
 if sys.argv[1] == 'import':
     if len(sys.argv)==4:
         
@@ -21,9 +31,9 @@ if sys.argv[1] == 'import':
 
         for line in lines:
             argv = unpack_line(line)
-            sql = """INSERT INTO prognoz2(date, temperature, pressure, nebulosity, humidity, station)
+            sql = """INSERT INTO prognoz3(date, temperature, pressure, nebulosity, humidity, station)
             VALUES ('%(date)s', '%(temperature)s', '%(pressure)s', '%(nebulosity)s', '%(humidity)s', '%(station)s')
-            """%{"date":argv[0], "temperature":argv[1], "pressure":argv[2], "nebulosity":argv[3], "humidity":argv[4], "station":sys.argv[2]}
+            """%{"date":argv[0], "temperature":convert(float(argv[1])), "pressure":argv[2], "nebulosity":argv[3], "humidity":argv[4], "station":sys.argv[2]}
             cursor.execute(sql)
             db.commit()
 
@@ -33,7 +43,7 @@ if sys.argv[1] == 'import':
 
 if sys.argv[1] == 'avarage':
     if len(sys.argv)==4:
-        sql2 = """SELECT temperature from prognoz2 WHERE date BETWEEN '%(1)s' AND '%(2)s'
+        sql2 = """SELECT temperature from prognoz3 WHERE date BETWEEN '%(1)s' AND '%(2)s'
         """%{"1":sys.argv[2], "2":sys.argv[3]}
         cursor.execute(sql2)
         data = cursor.fetchall()
@@ -42,9 +52,9 @@ if sys.argv[1] == 'avarage':
         n = 0
 
         for rec in data:
-            t = t + int(rec[0])
+            t = t + float(rec[0])
             n = n + 1
-        print 'avarage temperature:', t/n
+        print 'avarage temperature:', int(revconv(t/n))
 
     else:
         print("Write: regime first date last date")
@@ -53,19 +63,21 @@ if sys.argv[1] == 'avarage':
 ########avarage for day###############
 def daycalc(st,param):
     
-    sql3 = """SELECT %(1)s from prognoz2 WHERE station = '%(2)s' AND date = CAST(sysdate() AS DATE) 
+    sql3 = """SELECT %(1)s from prognoz3 WHERE station = '%(2)s' AND date = CAST(sysdate() AS DATE) 
     """%{"1":param, "2":st}
     cursor.execute(sql3)
 
     data = cursor.fetchall()
-
     t = 0
     n = 0
 
     for rec in data:
-        t = t + int(rec[0])
+        t = t + float(rec[0])
         n = n + 1
-    return(t/n)
+    if param == 'temperature':
+        return int(revconv(t/n))
+    else:
+        return int(t/n)
 ######################################
 
 if sys.argv[1] == 'daycalc':
@@ -77,7 +89,7 @@ if sys.argv[1] == 'daycalc':
         
 ##########print all###################
 def allst():
-    sql4 = """SELECT station from prognoz2 WHERE date = CAST(sysdate() AS DATE) 
+    sql4 = """SELECT station from prognoz3 WHERE date = CAST(sysdate() AS DATE) 
     """
     cursor.execute(sql4)
     data = cursor.fetchall()
@@ -88,7 +100,7 @@ def allst():
     return allst
             
 def printall(st):
-    sql5 = """SELECT * from prognoz2 WHERE station = '%(1)s' AND date = CAST(sysdate() AS DATE) 
+    sql5 = """SELECT * from prognoz3 WHERE station = '%(1)s' AND date = CAST(sysdate() AS DATE) 
     """%{"1":st}
     cursor.execute(sql5)
 
@@ -96,10 +108,11 @@ def printall(st):
     for rec in data:
         print 'station', rec[5]
         print 'date', rec[0]
-        print 'temperature', rec[1]
+        print 'temperature', int(revconv(float(rec[1])))
         print 'pressure', rec[2]
         print 'nebulosity', rec[3]
-        print 'humidity', rec[4]   
+        print 'humidity', rec[4]
+        print
 #########################################
         
 if sys.argv[1] == 'hottest':
