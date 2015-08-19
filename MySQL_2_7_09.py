@@ -2,6 +2,9 @@ import MySQLdb
 import sys
 import ConfigParser
 
+import time
+
+
 config = ConfigParser.RawConfigParser()
 config.read('configs.ini')
 
@@ -41,6 +44,14 @@ if sys.argv[1] == 'import':
         print("Write: regime station filename")
         sys.exit(1)
 
+def avarage(data):
+    t = 0
+    n = 0
+    for rec in data:
+        t = t + float(rec[0])
+        n = n + 1
+    return (t/n)
+    
 if sys.argv[1] == 'avarage':
     if len(sys.argv)==4:
         sql2 = """SELECT temperature from prognoz3 WHERE date BETWEEN '%(1)s' AND '%(2)s'
@@ -48,13 +59,7 @@ if sys.argv[1] == 'avarage':
         cursor.execute(sql2)
         data = cursor.fetchall()
 
-        t = 0
-        n = 0
-
-        for rec in data:
-            t = t + float(rec[0])
-            n = n + 1
-        print 'avarage temperature:', int(revconv(t/n))
+        print 'avarage temperature:', int(revconv(avarage(data)))
 
     else:
         print("Write: regime first date last date")
@@ -68,16 +73,11 @@ def daycalc(st,param):
     cursor.execute(sql3)
 
     data = cursor.fetchall()
-    t = 0
-    n = 0
-
-    for rec in data:
-        t = t + float(rec[0])
-        n = n + 1
+    
     if param == 'temperature':
-        return int(revconv(t/n))
+        return int(revconv(avarage(data)))
     else:
-        return int(t/n)
+        return int(avarage(data))
 ######################################
 
 if sys.argv[1] == 'daycalc':
@@ -88,11 +88,7 @@ if sys.argv[1] == 'daycalc':
         sys.exit(1)
         
 ##########print all###################
-def allst():
-    sql4 = """SELECT station from prognoz3 WHERE date = CAST(sysdate() AS DATE) 
-    """
-    cursor.execute(sql4)
-    data = cursor.fetchall()
+def allst(data):
     allst = []
     for rec in data:
         if rec[0] not in allst:
@@ -118,7 +114,12 @@ def printall(st):
 if sys.argv[1] == 'hottest':
 
     t = -100
-    for st in allst():
+    sql4 = """SELECT station from prognoz3 WHERE date = CAST(sysdate() AS DATE) 
+    """
+    cursor.execute(sql4)
+    data = cursor.fetchall()
+    
+    for st in allst(data):
         tst = daycalc(st,'temperature')
         if tst > t:
             maxst = st
@@ -127,9 +128,52 @@ if sys.argv[1] == 'hottest':
     printall(maxst)
 
 if sys.argv[1] == 'all':
-    for st in allst():
+    sql4 = """SELECT station from prognoz3 WHERE date = CAST(sysdate() AS DATE) 
+    """
+    cursor.execute(sql4)
+    data = cursor.fetchall()
+    for st in allst(data):
         printall(st)
 
+def printhistory(year,month):
+    print 'year',year
+    print 'month', month
+    sql4 = """SELECT station from prognoz3 WHERE year(date) = %(1)s AND month(date) = %(2)s  
+    """%{"1":year, "2":month}
+    cursor.execute(sql4)
+    data = cursor.fetchall()
+    for st in allst(data):
+        print st
+        sql = """SELECT temperature from prognoz3 WHERE year(date)='%(1)s' AND month(date)='%(2)s'
+        AND station='%(3)s'
+        """%{"1":year, "2":month, "3":st}
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        print int(revconv(avarage(data)))
+    
+if sys.argv[1] == 'history':
+    sql = """SELECT month(min(date)) from prognoz3
+    """
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    month = data[0][0]
+    sql = """SELECT year(min(date)) from prognoz3
+    """
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    year = data[0][0]
+
+    printhistory(year,month)
+    while year < time.localtime()[0]:
+        while month < 12:
+            month = month + 1
+            printhistory(year,month)
+        month = 0
+        year = year + 1
+    if year == time.localtime()[0]:
+        while month < time.localtime()[1]:
+            month = month + 1
+            printhistory(year,month)
 
 
 db.close()
