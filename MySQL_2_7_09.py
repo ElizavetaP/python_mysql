@@ -1,7 +1,6 @@
 import MySQLdb
 import sys
 import ConfigParser
-
 import time
 
 
@@ -43,6 +42,18 @@ if sys.argv[1] == 'import':
     else:
         print("Write: regime station filename")
         sys.exit(1)
+
+if sys.argv[1] == 'site':
+    import urllib2
+    import json
+    response = urllib2.urlopen('http://api.openweathermap.org/data/2.5/forecast/daily?q=Moscow,200&cnt=1')
+    data = response.read()
+    a = json.loads(data)
+    sql = """INSERT INTO prognoz3(date, temperature, pressure, nebulosity, humidity, station)
+    VALUES (CAST(sysdate() AS DATE), '%(temperature)s', '%(pressure)s', '%(nebulosity)s', '%(humidity)s', 'site')
+    """%{"temperature":a['list'][0]['temp']['day']-273.15 , "pressure":a['list'][0]['pressure'], "nebulosity":a['list'][0]['clouds'], "humidity":a['list'][0]['humidity']}
+    cursor.execute(sql)
+    db.commit()
 
 def avarage(data):
     t = 0
