@@ -2,13 +2,20 @@ import MySQLdb
 import sys
 import ConfigParser
 import time
+from datetime import datetime
 
 
 config = ConfigParser.RawConfigParser()
 config.read('configs.ini')
 
-db = MySQLdb.connect(host=config.get('mysql', 'host'), user=config.get('mysql', 'user'), passwd = config.get('mysql', 'passwd'),
-                     db = config.get('mysql', 'db'))
+try:
+    db = MySQLdb.connect(host=config.get('mysql', 'host'), user=config.get('mysql', 'user'), passwd = config.get('mysql', 'passwd'),
+                         db = config.get('mysql', 'db'))
+    
+except Exception:
+    print('Access denied for user meteouser@localhost (using password: YES)')
+    sys.exit(1)
+    
 cursor = db.cursor()
 
 def convert(T):
@@ -20,6 +27,10 @@ def revconv (T):
     if config.get('temperature', 'T')== 'F':
         T = T*float(9)/5 + 32
     return round(T)
+
+if len(sys.argv)==1 or sys.argv[1] not in ['import', 'site', 'avarage', 'daycalc', 'hottest', 'all', 'history']:
+    print('select regime: import, site, avarage, daycalc, hottest, all, history')
+    sys.exit(1)
 
 if sys.argv[1] == 'import':
     if len(sys.argv)==4:
@@ -54,6 +65,14 @@ if sys.argv[1] == 'site':
     """%{"temperature":a['list'][0]['temp']['day']-273.15 , "pressure":a['list'][0]['pressure'], "nebulosity":a['list'][0]['clouds'], "humidity":a['list'][0]['humidity']}
     cursor.execute(sql)
     db.commit()
+
+    print 'station', 'site'
+    d = datetime.today()
+    print 'date', d.date()
+    print 'temperature', a['list'][0]['temp']['day']-273.15
+    print 'pressure', a['list'][0]['pressure']
+    print 'nebulosity', a['list'][0]['clouds']
+    print 'humidity', a['list'][0]['humidity']
 
 def avarage(data):
     t = 0
