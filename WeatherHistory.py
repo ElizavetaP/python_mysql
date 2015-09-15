@@ -69,7 +69,7 @@ if sys.argv[1] == 'site':
     print 'station', 'site'
     d = datetime.today()
     print 'date', d.date()
-    print 'temperature', a['list'][0]['temp']['day']-273.15
+    print 'temperature', a['list'][0]['temp']['day'], 'K'
     print 'pressure', a['list'][0]['pressure']
     print 'nebulosity', a['list'][0]['clouds']
     print 'humidity', a['list'][0]['humidity']
@@ -89,7 +89,7 @@ if sys.argv[1] == 'avarage':
         cursor.execute(sql2)
         data = cursor.fetchall()
 
-        print 'avarage temperature:', int(revconv(avarage(data)))
+        print 'avarage temperature:', int(revconv(avarage(data))), config.get('temperature', 'T')
 
     else:
         print("Write: regime first date last date")
@@ -112,7 +112,10 @@ def daycalc(st,param):
 
 if sys.argv[1] == 'daycalc':
     if len(sys.argv)==4:
-        print 'day-calculate for a station', daycalc(sys.argv[2],sys.argv[3])
+        if sys.argv[3] == 'temperature':
+            print 'day-calculate for a station', daycalc(sys.argv[2],sys.argv[3]), config.get('temperature', 'T')
+        else:
+            print 'day-calculate for a station', daycalc(sys.argv[2],sys.argv[3])
     else:
         print("Write: regime station parameter")
         sys.exit(1)
@@ -134,7 +137,7 @@ def printall(st):
     for rec in data:
         print 'station', rec[5]
         print 'date', rec[0]
-        print 'temperature', int(revconv(float(rec[1])))
+        print 'temperature', int(revconv(float(rec[1]))), config.get('temperature', 'T')
         print 'pressure', rec[2]
         print 'nebulosity', rec[3]
         print 'humidity', rec[4]
@@ -179,7 +182,7 @@ def printhistory(year,month):
         """%{"1":year, "2":month, "3":st}
         cursor.execute(sql)
         data = cursor.fetchall()
-        print int(revconv(avarage(data)))
+        print int(revconv(avarage(data))), config.get('temperature', 'T')
     
 if sys.argv[1] == 'history':
     sql = """SELECT month(min(date)) from prognoz3
