@@ -28,8 +28,8 @@ def revconv (T):
         T = T*float(9)/5 + 32
     return round(T)
 
-if len(sys.argv)==1 or sys.argv[1] not in ['import', 'site', 'avarage', 'daycalc', 'hottest', 'all', 'history']:
-    print('select regime: import, site, avarage, daycalc, hottest, all, history')
+if len(sys.argv)==1 or sys.argv[1] not in ['import', 'site', 'average', 'daycalc', 'hottest', 'all', 'history']:
+    print('select mode: import, site, average, daycalc, hottest, all, history')
     sys.exit(1)
 
 if sys.argv[1] == 'import':
@@ -51,7 +51,7 @@ if sys.argv[1] == 'import':
             db.commit()
 
     else:
-        print("Write: regime station filename")
+        print("Write: mode station filename")
         sys.exit(1)
 
 if sys.argv[1] == 'site':
@@ -74,7 +74,7 @@ if sys.argv[1] == 'site':
     print 'nebulosity', a['list'][0]['clouds']
     print 'humidity', a['list'][0]['humidity']
 
-def avarage(data):
+def average(data):
     t = 0
     n = 0
     for rec in data:
@@ -82,20 +82,20 @@ def avarage(data):
         n = n + 1
     return (t/n)
     
-if sys.argv[1] == 'avarage':
+if sys.argv[1] == 'average':
     if len(sys.argv)==4:
         sql2 = """SELECT temperature from prognoz3 WHERE date BETWEEN '%(1)s' AND '%(2)s'
         """%{"1":sys.argv[2], "2":sys.argv[3]}
         cursor.execute(sql2)
         data = cursor.fetchall()
 
-        print 'avarage temperature:', int(revconv(avarage(data))), config.get('temperature', 'T')
+        print 'average temperature:', int(revconv(average(data))), config.get('temperature', 'T')
 
     else:
-        print("Write: regime first date last date")
+        print("Write: mode first date last date")
         sys.exit(1)
 
-########avarage for day###############
+########average for day###############
 def daycalc(st,param):
     
     sql3 = """SELECT %(1)s from prognoz3 WHERE station = '%(2)s' AND date = CAST(sysdate() AS DATE) 
@@ -105,9 +105,9 @@ def daycalc(st,param):
     data = cursor.fetchall()
     
     if param == 'temperature':
-        return int(revconv(avarage(data)))
+        return int(revconv(average(data)))
     else:
-        return int(avarage(data))
+        return int(average(data))
 ######################################
 
 if sys.argv[1] == 'daycalc':
@@ -117,7 +117,7 @@ if sys.argv[1] == 'daycalc':
         else:
             print 'day-calculate for a station', daycalc(sys.argv[2],sys.argv[3])
     else:
-        print("Write: regime station parameter")
+        print("Write: mode station parameter")
         sys.exit(1)
         
 ##########print all###################
