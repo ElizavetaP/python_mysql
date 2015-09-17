@@ -151,13 +151,16 @@ if sys.argv[1] == 'hottest':
     """
     cursor.execute(sql4)
     data = cursor.fetchall()
-    
+    maxst = None
     for st in allst(data):
         tst = daycalc(st,'temperature')
         if tst > t:
             maxst = st
             t = tst
-    print 'hottest satation:', maxst
+    if maxst == None:
+        print 'There is no data today'
+    else:
+        print 'hottest satation:', maxst
     printall(maxst)
 
 if sys.argv[1] == 'all':
@@ -167,46 +170,17 @@ if sys.argv[1] == 'all':
     data = cursor.fetchall()
     for st in allst(data):
         printall(st)
-
-def printhistory(year,month):
-    print 'year',year
-    print 'month', month
-    sql4 = """SELECT station from prognoz3 WHERE year(date) = %(1)s AND month(date) = %(2)s  
-    """%{"1":year, "2":month}
-    cursor.execute(sql4)
-    data = cursor.fetchall()
-    for st in allst(data):
-        print st
-        sql = """SELECT temperature from prognoz3 WHERE year(date)='%(1)s' AND month(date)='%(2)s'
-        AND station='%(3)s'
-        """%{"1":year, "2":month, "3":st}
-        cursor.execute(sql)
-        data = cursor.fetchall()
-        print int(revconv(avarage(data))), config.get('temperature', 'T')
     
 if sys.argv[1] == 'history':
-    sql = """SELECT month(min(date)) from prognoz3
-    """
-    cursor.execute(sql)
-    data = cursor.fetchall()
-    month = data[0][0]
-    sql = """SELECT year(min(date)) from prognoz3
-    """
-    cursor.execute(sql)
-    data = cursor.fetchall()
-    year = data[0][0]
 
-    printhistory(year,month)
-    while year < time.localtime()[0]:
-        while month < 12:
-            month = month + 1
-            printhistory(year,month)
-        month = 0
-        year = year + 1
-    if year == time.localtime()[0]:
-        while month < time.localtime()[1]:
-            month = month + 1
-            printhistory(year,month)
+    sql = """select max(temperature), substring(date, 1, 7), station from prognoz3 group by substring(date, 1, 7), station
+    """
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    print '{0:10} | {1:10} | {2:10}'.format('date', 'station', 'temperature')
+    for rec in data:
+        print '{0:10} | {1:10} | {2:10}'.format(str(rec[1]), str(rec[2]), str(int(revconv(float(rec[0])))) + '  C')
+   
 
 
 db.close()
